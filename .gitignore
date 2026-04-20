@@ -25,6 +25,7 @@ replay_pid*
 
 #data
 data/*
+data/graph.ser
 !data/.gitkeep
 
 target/
