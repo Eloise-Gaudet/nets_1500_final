@@ -38,12 +38,36 @@ public class Person implements Serializable {
     }
     */
 
-    public boolean equals(Person other) {
-        return id.equals(other.get_id());
+    //some helper methods
+    public String getName() { 
+        return name; 
+    }
+    public boolean isActor() { 
+        return is_actor; 
+    }
+    public boolean isDirector() { 
+        return is_director; 
     }
 
     public String get_id() {
         return id;
+    }
+
+    //be able to find equalities
+    public boolean equals(Person other) {
+        return id.equals(other.get_id());
+    }
+ 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Person)) return false;
+        return id.equals(((Person) obj).id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
     }
 
 }

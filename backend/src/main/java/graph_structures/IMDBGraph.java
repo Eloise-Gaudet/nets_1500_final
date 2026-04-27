@@ -2,7 +2,10 @@ package graph_structures;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -111,5 +114,33 @@ public class IMDBGraph implements Serializable {
         }
     }
 
+
+    //be able to get neighbors of certain people for working on private graph
+    public Map<String, Integer> get_neighbors(String personId) {
+        HashMap<String, Integer> neighbors = all_connections.get(personId);
+        //check if no neighbors
+        if (neighbors == null) {
+            return Collections.emptyMap();
+        }
+
+        return Collections.unmodifiableMap(neighbors);
+    }
+
+    public Set<String> get_all_person_ids() {
+        return Collections.unmodifiableSet(all_people.keySet());
+    }
+
+    public int get_degree(String personId) {
+        HashMap<String, Integer> neighbors = all_connections.get(personId);
+        if (neighbors == null) {
+            return 0;
+        } else {
+            return neighbors.size();
+        }
+    }
+
+    public int size() {
+        return all_people.size();
+    }
 
 }
