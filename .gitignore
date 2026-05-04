@@ -29,3 +29,6 @@ data/graph.ser
 !data/.gitkeep
 
 target/
+
+.DS_Store
+**/.DS_Store

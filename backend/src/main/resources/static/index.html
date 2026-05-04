@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IMDB Graph Explorer</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="header-title">
+        <span class="header-logo">◈</span>
+        <div>
+          <h1>IMDB Graph Explorer</h1>
+          <p>Collaboration networks in film &amp; television</p>
+        </div>
+      </div>
+      <div id="header-stats" class="header-stats">Loading graph…</div>
+    </div>
+  </header>
+
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="overview">Overview</button>
+    <button class="tab-btn" data-tab="search">Search</button>
+    <button class="tab-btn" data-tab="centrality">Centrality</button>
+    <button class="tab-btn" data-tab="path">Path Finder</button>
+    <button class="tab-btn" data-tab="triadic">Triadic Closure</button>
+    <button class="tab-btn" data-tab="graph">Graph Explorer</button>
+  </nav>
+
+  <main>
+
+    <!-- ── OVERVIEW ─────────────────────────────────────────── -->
+    <section id="tab-overview" class="tab active">
+      <div class="card">
+        <h2>About This Project</h2>
+        <p>
+          This tool analyzes the IMDB collaboration graph — a network where every node is an
+          actor or director and every edge represents co-appearing in at least one film or TV show.
+          Edge <em>weight</em> is the number of shared titles, so two frequent co-stars have a
+          heavier edge than two people who worked together only once.
+        </p>
+        <div class="stat-row" id="stat-row">
+          <div class="stat-card">
+            <div class="stat-num" id="stat-people">—</div>
+            <div class="stat-lbl">People in graph</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>What You Can Do</h2>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🔍</div>
+            <h3>Search</h3>
+            <p>Look up any actor or director to see their degree, role, and top collaborators.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Centrality Rankings</h3>
+            <p>Rank the most influential nodes by degree, eigenvector, or Katz centrality.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🔗</div>
+            <h3>Path Finder</h3>
+            <p>Find the shortest collaboration chain between any two people — the "six degrees of separation" query.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">△</div>
+            <h3>Triadic Closure</h3>
+            <p>Identify missing edges: two people who share a mutual collaborator but have never worked together directly.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🕸</div>
+            <h3>Graph Explorer</h3>
+            <p>Interactively explore a person's collaboration network. Drag nodes, click to inspect, double-click to expand.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SEARCH ────────────────────────────────────────────── -->
+    <section id="tab-search" class="tab hidden">
+      <div class="card">
+        <h2>Search for a Person</h2>
+        <div class="input-row">
+          <input id="search-input" type="text" placeholder="Actor or director name…" autocomplete="off">
+          <button id="search-btn" class="btn-primary">Search</button>
+        </div>
+        <div id="search-results" class="results-list"></div>
+      </div>
+
+      <div id="person-card" class="card hidden">
+        <div class="person-header">
+          <div>
+            <h2 id="pc-name"></h2>
+            <div id="pc-meta" class="person-meta"></div>
+          </div>
+          <div class="person-stat-group">
+            <div class="stat-card small">
+              <div class="stat-num" id="pc-degree">—</div>
+              <div class="stat-lbl">Collaborators</div>
+            </div>
+          </div>
+        </div>
+        <h3>Top Collaborators</h3>
+        <div id="pc-neighbors"></div>
+        <div class="card-actions">
+          <button id="pc-graph-btn" class="btn-secondary">View in Graph Explorer →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CENTRALITY ────────────────────────────────────────── -->
+    <section id="tab-centrality" class="tab hidden">
+      <div class="card">
+        <h2>Centrality Rankings</h2>
+        <p class="hint">
+          <strong>Degree</strong> = number of distinct collaborators (fast).<br>
+          <strong>Eigenvector</strong> = rewards having well-connected collaborators (power iteration, may be slow on large graphs).<br>
+          <strong>Katz</strong> = like eigenvector but with a baseline score for every node (power iteration, may be slow).
+        </p>
+        <div class="control-row">
+          <select id="c-type">
+            <option value="degree">Degree</option>
+            <option value="eigenvector">Eigenvector</option>
+            <option value="katz">Katz</option>
+          </select>
+          <select id="c-filter">
+            <option value="">All</option>
+            <option value="actors">Actors only</option>
+            <option value="directors">Directors only</option>
+          </select>
+          <input id="c-topN" type="number" value="10" min="1" max="50" style="width:70px">
+          <button id="c-btn" class="btn-primary">Get Rankings</button>
+        </div>
+        <div id="c-warning" class="warning hidden">
+          ⚠ Eigenvector / Katz centrality runs power iteration over the full graph.
+          This may take 30 – 120 s on large datasets. Hang tight…
+        </div>
+        <div id="c-results"></div>
+      </div>
+    </section>
+
+    <!-- ── PATH FINDER ───────────────────────────────────────── -->
+    <section id="tab-path" class="tab hidden">
+      <div class="card">
+        <h2>Degrees of Separation</h2>
+        <p class="hint">Find the shortest collaboration chain between two people using BFS.</p>
+        <div class="path-row">
+          <div class="person-picker" id="pp-from">
+            <label>Person A</label>
+            <input type="text" placeholder="Search…" autocomplete="off">
+            <div class="ac-dropdown hidden"></div>
+            <div class="chosen-badge hidden"></div>
+          </div>
+          <div class="path-arrow">→</div>
+          <div class="person-picker" id="pp-to">
+            <label>Person B</label>
+            <input type="text" placeholder="Search…" autocomplete="off">
+            <div class="ac-dropdown hidden"></div>
+            <div class="chosen-badge hidden"></div>
+          </div>
+        </div>
+        <button id="path-btn" class="btn-primary">Find Path</button>
+        <div id="path-results"></div>
+      </div>
+    </section>
+
+    <!-- ── TRIADIC CLOSURE ───────────────────────────────────── -->
+    <section id="tab-triadic" class="tab hidden">
+      <div class="card">
+        <h2>Triadic Closure</h2>
+        <p class="hint">
+          An <em>open triad</em> exists when person A collaborated with B and C, but B and C
+          have never worked together. A <em>strong</em> open triad requires both A–B and A–C
+          edges to have weight ≥ 2 (multiple shared titles).
+        </p>
+        <div class="input-row">
+          <div style="position:relative; flex:1">
+            <input id="tri-input" type="text" placeholder="Search for a person…" autocomplete="off">
+            <div id="tri-ac" class="ac-dropdown hidden"></div>
+          </div>
+        </div>
+        <div id="tri-chosen" class="chosen-badge hidden" style="margin-top:8px"></div>
+        <div class="control-row" style="margin-top:12px">
+          <label class="checkbox-label">
+            <input id="tri-strong" type="checkbox"> Strong triads only
+          </label>
+          <span style="margin-left:auto; display:flex; align-items:center; gap:8px">
+            <label>Limit</label>
+            <input id="tri-limit" type="number" value="20" min="1" max="100" style="width:70px">
+          </span>
+          <button id="tri-btn" class="btn-primary">Find Open Triads</button>
+        </div>
+        <div id="tri-results"></div>
+      </div>
+    </section>
+
+    <!-- ── GRAPH EXPLORER ────────────────────────────────────── -->
+    <section id="tab-graph" class="tab hidden">
+      <div class="card">
+        <h2>Graph Explorer</h2>
+        <p class="hint">Search for a person to load their collaboration network. Drag nodes to rearrange. Click a node to expand its neighbors. Double-click to re-center on that person.</p>
+        <div class="input-row">
+          <div style="position:relative; flex:1">
+            <input id="gex-input" type="text" placeholder="Search for a person…" autocomplete="off">
+            <div id="gex-ac" class="ac-dropdown hidden"></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:.85rem;color:var(--muted)">
+            Neighbors
+            <input id="gex-limit" type="number" value="30" min="5" max="200" step="5"
+              style="width:64px;padding:4px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.85rem;">
+          </label>
+          <button id="gex-btn" class="btn-primary">Load Network</button>
+        </div>
+        <div id="gex-chosen" class="chosen-badge hidden" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card" id="graph-outer" style="padding:0; overflow:hidden;">
+        <div id="graph-empty" class="graph-placeholder">
+          Search for a person above to visualize their network
+        </div>
+        <div id="graph-net" style="height:600px; display:none;"></div>
+        <div id="graph-legend" class="graph-legend hidden">
+          <span class="leg actor">● Actor</span>
+          <span class="leg director">● Director</span>
+          <span class="leg both">● Actor &amp; Director</span>
+          <span class="leg center">◈ Selected</span>
+        </div>
+        <div id="graph-info" class="graph-info hidden"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
