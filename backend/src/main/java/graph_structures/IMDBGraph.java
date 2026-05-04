@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Set;
 
 
@@ -69,6 +69,24 @@ public class IMDBGraph implements Serializable {
             }
         }
 
+    }
+
+    public int getSize() {
+        return all_connections.size();
+    }
+
+    public Set<String> getNodes() {
+        return all_connections.keySet();
+    }
+
+    public Set<String> outNeighbors(String s) {
+        HashMap<String, Integer> stuff = all_connections.get(s);
+        return stuff.keySet();
+    }
+
+    public int getWeight(String a, String b) {
+        HashMap<String, Integer> stuff = all_connections.get(a);
+        return stuff.get(b);
     }
 
     /**
