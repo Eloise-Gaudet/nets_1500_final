@@ -375,8 +375,9 @@ select:focus {
   transition: border-color .15s;
 }
 .neighbor-item:hover { border-color: var(--accent); }
-.neighbor-item .n-name  { font-weight: 600; font-size: .88rem; color: #fff; }
-.neighbor-item .n-count { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+.neighbor-item .n-name   { font-weight: 600; font-size: .88rem; color: #fff; }
+.neighbor-item .n-count  { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+.neighbor-item .n-titles { font-size: .75rem; color: var(--muted); margin-top: 3px; font-style: italic; }
 
 .card-actions {
   display: flex;

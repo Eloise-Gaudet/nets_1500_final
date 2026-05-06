@@ -1,14 +1,22 @@
 package com.imdb;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import Centralities.Centralities;
 import graph_algorithms.TriadicClosure;
 import graph_structures.IMDBGraph;
 import graph_structures.Person;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -33,6 +41,7 @@ public class ApiController {
     static class NeighborDto {
         public String id, name;
         public int sharedTitles;
+        public List<String> sharedTitleNames;
         NeighborDto(String id, String name, int sharedTitles) {
             this.id = id; this.name = name; this.sharedTitles = sharedTitles;
         }
@@ -55,9 +64,9 @@ public class ApiController {
 
     static class PathStepDto {
         public String id, name;
-        public int sharedTitles;
-        PathStepDto(String id, String name, int sharedTitles) {
-            this.id = id; this.name = name; this.sharedTitles = sharedTitles;
+        public List<String> sharedTitleNames;
+        PathStepDto(String id, String name, List<String> sharedTitleNames) {
+            this.id = id; this.name = name; this.sharedTitleNames = sharedTitleNames;
         }
     }
 
@@ -81,6 +90,17 @@ public class ApiController {
         StatsDto(int personCount) { this.personCount = personCount; }
     }
 
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /** Returns cached Centralities when no filters are set, or a fresh one on a filtered graph. */
+    private Centralities centralitiesFor(Integer type, String genres, Integer startYear, Integer endYear) {
+        if (type == null && (genres == null || genres.isEmpty()) && startYear == null)
+            return service.getCentralities();
+        String[] genreArr = (genres != null && !genres.isEmpty()) ? genres.split(",") : null;
+        IMDBGraph filtered = service.filteredGraph(type, genreArr, startYear, endYear);
+        return new Centralities(filtered);
+    }
+
     // ── Endpoints ─────────────────────────────────────────────────────────────
 
     @GetMapping("/stats")
@@ -102,9 +122,14 @@ public class ApiController {
     @GetMapping("/persons/{id}")
     public ResponseEntity<PersonDetailDto> personDetail(
             @PathVariable(name = "id") String id,
-            @RequestParam(name = "limit", defaultValue = "25") int limit) {
+            @RequestParam(name = "limit", defaultValue = "25") int limit,
+            @RequestParam(name = "type", required = false) Integer type,
+            @RequestParam(name = "genres", required = false) String genres,
+            @RequestParam(name = "startYear", required = false) Integer startYear,
+            @RequestParam(name = "endYear", required = false) Integer endYear) {
 
-        IMDBGraph g = service.getGraph();
+        String[] genreArr = (genres != null && !genres.isEmpty()) ? genres.split(",") : null;
+        IMDBGraph g = service.filteredGraph(type, genreArr, startYear, endYear);
         Person p = g.get_person(id);
         if (p == null) return ResponseEntity.notFound().build();
 
@@ -116,6 +141,7 @@ public class ApiController {
         }
         neighborList.sort((a, b) -> b.sharedTitles - a.sharedTitles);
         if (neighborList.size() > limit) neighborList = neighborList.subList(0, limit);
+        for (NeighborDto n : neighborList) n.sharedTitleNames = g.get_shared_titles(id, n.id);
 
         PersonDetailDto dto = new PersonDetailDto();
         dto.id = id; dto.name = p.getName();
@@ -129,9 +155,13 @@ public class ApiController {
     public List<RankDto> degreeCentrality(
             @RequestParam(name = "topN", defaultValue = "10") int topN,
             @RequestParam(name = "actorsOnly", defaultValue = "false") boolean actorsOnly,
-            @RequestParam(name = "directorsOnly", defaultValue = "false") boolean directorsOnly) {
+            @RequestParam(name = "directorsOnly", defaultValue = "false") boolean directorsOnly,
+            @RequestParam(name = "type", required = false) Integer type,
+            @RequestParam(name = "genres", required = false) String genres,
+            @RequestParam(name = "startYear", required = false) Integer startYear,
+            @RequestParam(name = "endYear", required = false) Integer endYear) {
         List<RankDto> out = new ArrayList<>();
-        for (Centralities.PersonRank r : service.getCentralities().rankByDegree(topN, actorsOnly, directorsOnly))
+        for (Centralities.PersonRank r : centralitiesFor(type, genres, startYear, endYear).rankByDegree(topN, actorsOnly, directorsOnly))
             out.add(new RankDto(r.personId, r.personName, r.score));
         return out;
     }
@@ -141,9 +171,13 @@ public class ApiController {
             @RequestParam(name = "topN", defaultValue = "10") int topN,
             @RequestParam(name = "actorsOnly", defaultValue = "false") boolean actorsOnly,
             @RequestParam(name = "directorsOnly", defaultValue = "false") boolean directorsOnly,
-            @RequestParam(name = "maxIter", defaultValue = "15") int maxIter) {
+            @RequestParam(name = "maxIter", defaultValue = "15") int maxIter,
+            @RequestParam(name = "type", required = false) Integer type,
+            @RequestParam(name = "genres", required = false) String genres,
+            @RequestParam(name = "startYear", required = false) Integer startYear,
+            @RequestParam(name = "endYear", required = false) Integer endYear) {
         List<RankDto> out = new ArrayList<>();
-        for (Centralities.PersonRank r : service.getCentralities().rankByEigenvector(topN, actorsOnly, directorsOnly, maxIter))
+        for (Centralities.PersonRank r : centralitiesFor(type, genres, startYear, endYear).rankByEigenvector(topN, actorsOnly, directorsOnly, maxIter))
             out.add(new RankDto(r.personId, r.personName, r.score));
         return out;
     }
@@ -155,21 +189,37 @@ public class ApiController {
             @RequestParam(name = "directorsOnly", defaultValue = "false") boolean directorsOnly,
             @RequestParam(name = "alpha", defaultValue = "0.005") double alpha,
             @RequestParam(name = "beta", defaultValue = "1.0") double beta,
-            @RequestParam(name = "maxIter", defaultValue = "15") int maxIter) {
+            @RequestParam(name = "maxIter", defaultValue = "15") int maxIter,
+            @RequestParam(name = "type", required = false) Integer type,
+            @RequestParam(name = "genres", required = false) String genres,
+            @RequestParam(name = "startYear", required = false) Integer startYear,
+            @RequestParam(name = "endYear", required = false) Integer endYear) {
         List<RankDto> out = new ArrayList<>();
-        for (Centralities.PersonRank r : service.getCentralities().rankByKatz(topN, actorsOnly, directorsOnly, alpha, beta, maxIter))
+        for (Centralities.PersonRank r : centralitiesFor(type, genres, startYear, endYear).rankByKatz(topN, actorsOnly, directorsOnly, alpha, beta, maxIter))
             out.add(new RankDto(r.personId, r.personName, r.score));
         return out;
     }
 
     @GetMapping("/path")
-    public PathResultDto path(@RequestParam(name = "from") String from, @RequestParam(name = "to") String to) {
+    public PathResultDto path(
+            @RequestParam(name = "from") String from,
+            @RequestParam(name = "to") String to,
+            @RequestParam(name = "type", required = false) Integer type,
+            @RequestParam(name = "genres", required = false) String genres,
+            @RequestParam(name = "startYear", required = false) Integer startYear,
+            @RequestParam(name = "endYear", required = false) Integer endYear) {
+        String[] genreArr = (genres != null && !genres.isEmpty()) ? genres.split(",") : null;
+        IMDBGraph g = service.filteredGraph(type, genreArr, startYear, endYear);
         Optional<List<Centralities.PersonStep>> result =
-            service.getCentralities().findDegreesOfSeparation(from, to);
+            centralitiesFor(type, genres, startYear, endYear).findDegreesOfSeparation(from, to);
         if (!result.isPresent()) return new PathResultDto(false, -1, new ArrayList<>());
+        List<Centralities.PersonStep> raw = result.get();
         List<PathStepDto> steps = new ArrayList<>();
-        for (Centralities.PersonStep s : result.get())
-            steps.add(new PathStepDto(s.personId, s.personName, s.collaborationCount));
+        for (int i = 0; i < raw.size(); i++) {
+            Centralities.PersonStep s = raw.get(i);
+            List<String> titles = (i > 0) ? g.get_shared_titles(raw.get(i - 1).personId, s.personId) : new ArrayList<>();
+            steps.add(new PathStepDto(s.personId, s.personName, titles));
+        }
         return new PathResultDto(true, steps.size() - 1, steps);
     }
 

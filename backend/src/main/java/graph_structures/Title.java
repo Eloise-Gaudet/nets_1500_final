@@ -75,4 +75,24 @@ public class Title implements Serializable {
         return id.equals(other.get_id());
     }
 
+    public int get_type() {
+        return type;
+    }
+
+    public String[] get_genres() {
+        return genres;
+    }
+
+    public int get_start_year() {
+        return start_year;
+    }
+
+    public int get_end_year() {
+        return end_year;
+    }
+
+    public String get_name() {
+        return title;
+    }
+
 }

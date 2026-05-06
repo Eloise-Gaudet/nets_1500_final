@@ -2,9 +2,13 @@ package com.imdb;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -12,6 +16,7 @@ import Centralities.Centralities;
 import graph_structures.DataLoader;
 import graph_structures.IMDBGraph;
 import graph_structures.Person;
+import graph_structures.Title;
 import jakarta.annotation.PostConstruct;
 
 @Service
@@ -82,4 +87,23 @@ public class GraphService {
 
     public IMDBGraph getGraph()           { return graph; }
     public Centralities getCentralities() { return centralities; }
+
+    public IMDBGraph filteredGraph(Integer type, String[] genres, Integer startYear, Integer endYear) {
+        if (type == null && (genres == null || genres.length == 0) && startYear == null)
+            return graph;
+
+        Set<String> genreSet = (genres != null && genres.length > 0)
+            ? new HashSet<>(Arrays.asList(genres)) : null;
+
+        IMDBGraph result = new IMDBGraph();
+        for (Title t : graph.get_all_titles()) {
+            if (type != null && t.get_type() != type) continue;
+            if (genreSet != null && Collections.disjoint(Arrays.asList(t.get_genres()), genreSet)) continue;
+            if (startYear != null && endYear != null && (t.get_start_year() < startYear || t.get_end_year() > endYear)) continue;
+            for (Person p : t.get_directors()) result.add_person(p);
+            for (Person p : t.get_actors()) result.add_person(p);
+            result.add_title(t);
+        }
+        return result;
+    }
 }
