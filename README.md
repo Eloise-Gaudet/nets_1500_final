@@ -13,10 +13,14 @@ This project is a network analysis tool for exploring relationships within the f
 
 | Team Member | Contributions |
 |---|---|
-| **Eloise** | Data parsing, graph design, and filtering |
+| **Eloise** | Data parsing, graph design, and filtering (the graph_structures/ folder code) |
 | **Henry** | Graph algorithms — triadic closure and Dijkstra's shortest path (`graph_algorithms/` folder) |
 | **Tomas** | Centrality measures (degree centrality, Katz centrality) and the UI |
 
 ## AI Usage
 
-Claude Code was used to assist with structuring portions of the codebase, as well as producing a functioning UI. All algorithms, core logic, and data structures were designed by the team.
+Claude Code was used to assist with structuring portions of the codebase, as well as producing a functioning UI. All algorithms, core logic, and data structures were designed by the team. Specifically, all files/classes in the graph_structures folder were written from scratch, as well as Dijkstra.java, BinaryMinHeap.java, and BinaryMinHeapImpl.java. The other files were constructed using a mixture of hand written code and Claude code.
+
+## Running
+
+
