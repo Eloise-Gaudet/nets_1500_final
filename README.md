@@ -21,6 +21,6 @@ This project is a network analysis tool for exploring relationships within the f
 
 Claude Code was used to assist with structuring portions of the codebase, as well as producing a functioning UI. All algorithms, core logic, and data structures were designed by the team. Specifically, all files/classes in the graph_structures folder were written from scratch, as well as Dijkstra.java, BinaryMinHeap.java, and BinaryMinHeapImpl.java. The other files were constructed using a mixture of hand written code and Claude code.
 
-## Running
+## Project Update
 
-
+We changed our project idea from our intial proposal because we thought this new concept would provide more concrete data and allow us to do more interesting graph manipulations. 
