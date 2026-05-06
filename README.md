@@ -13,9 +13,9 @@ This project is a network analysis tool for exploring relationships within the f
 
 | Team Member | Contributions |
 |---|---|
-| **Eloise** | Data parsing, graph design, and filtering (the graph_structures/ folder code) |
+| **Eloise** | Data parsing, graph design, and filtering (the `graph_structures/` folder) |
 | **Henry** | Graph algorithms — triadic closure and Dijkstra's shortest path (`graph_algorithms/` folder) |
-| **Tomas** | Centrality measures (degree centrality, Katz centrality) and the UI |
+| **Tomas** | Centrality measures (degree centrality, Katz centrality) and the UI (`Centralities/` folder) |
 
 ## AI Usage
 
