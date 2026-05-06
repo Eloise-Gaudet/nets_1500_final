@@ -4,42 +4,23 @@ import graph_structures.IMDBGraph;
 
 import java.util.*;
 
-/**
- * Identifies triadic closure opportunities in an IMDBGraph.
- *
- * <p>A <em>weak triad</em> exists when person A is connected to both B and C, but B and C
- * have never collaborated directly. Completing the triad would mean B and C work together.
- *
- * <p>A <em>strong triad</em> (strong-triadic-closure) additionally requires that at least
- * two of the three edges carry a weight ≥ {@code STRONG_THRESHOLD} (i.e. A has collaborated
- * with both B and C on multiple titles), making it especially likely that B–C would benefit
- * from being introduced.
- */
+
+// Finds triadic closure opportunities in the graph
+// Strong connection when actors have worked together in at least 2 projects
 public class TriadicClosure {
 
-    /**
-     * Minimum edge weight (number of shared titles) to count as a "strong" connection.
-     * Adjust as needed for your dataset.
-     */
     public static final int STRONG_THRESHOLD = 2;
 
     private TriadicClosure() {}
 
-    // -----------------------------------------------------------------------
-    // Public result type
-    // -----------------------------------------------------------------------
-
-    /**
-     * Represents one open triad: a pivot node A connected to both B and C,
-     * where B–C is the missing edge.
-     */
+    // subclass to make saving OpenTriads easier 
     public static class OpenTriad {
         public final String pivot; // A
         public final String nodeB; // B
         public final String nodeC; // C
         public final int weightAB;
         public final int weightAC;
-        public final boolean isStrong; // true if both A–B and A–C are "strong"
+        public final boolean isStrong; // true if both A–B and A–C are strong
 
         public OpenTriad(String pivot, String b, String c,
                          int weightAB, int weightAC, boolean isStrong) {
@@ -59,21 +40,9 @@ public class TriadicClosure {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Core algorithm
-    // -----------------------------------------------------------------------
+    // Main Algorithm
+    // Finds all open triads in the graph, no order
 
-    /**
-     * Finds all open triads in the graph (weak triadic closure candidates).
-     *
-     * <p>For every node A, iterates over every pair (B, C) of A's neighbours.
-     * If B and C are not themselves connected, the triad A–B–C is open.
-     *
-     * <p>Each unordered pair {B, C} is reported only once per pivot A.
-     *
-     * @param g the IMDB collaboration graph
-     * @return list of all open triads, in no particular order
-     */
     public static List<OpenTriad> findOpenTriads(IMDBGraph g) {
         List<OpenTriad> result = new ArrayList<>();
 
@@ -99,14 +68,7 @@ public class TriadicClosure {
         return result;
     }
 
-    /**
-     * Convenience method: returns only the open triads that satisfy the
-     * strong-triadic-closure condition (both edges from the pivot have
-     * weight ≥ {@code STRONG_THRESHOLD}).
-     *
-     * @param g the IMDB collaboration graph
-     * @return list of strong open triads
-     */
+    // Same as above but only considers open triads with 2 strong connections
     public static List<OpenTriad> findStrongOpenTriads(IMDBGraph g) {
         List<OpenTriad> all = findOpenTriads(g);
         List<OpenTriad> strong = new ArrayList<>();
@@ -116,28 +78,17 @@ public class TriadicClosure {
         return strong;
     }
 
-    /**
-     * Returns open triads sorted by the total pivot-edge weight descending
-     * (highest-weight triads first — i.e. the most likely collaborations to
-     * recommend).
-     *
-     * @param g the IMDB collaboration graph
-     * @return sorted list of open triads
-     */
+
+
+    // Triadic Closure ordering open triads by those with the strongest connections
     public static List<OpenTriad> findOpenTriadsByPriority(IMDBGraph g) {
         List<OpenTriad> triads = findOpenTriads(g);
         triads.sort((a, b) -> (b.weightAB + b.weightAC) - (a.weightAB + a.weightAC));
         return triads;
     }
 
-    /**
-     * Returns all open triads where the pivot is the specified node.
-     * Useful for a "who should [person] introduce?" query.
-     *
-     * @param g     the IMDB collaboration graph
-     * @param pivot the node ID to focus on
-     * @return list of open triads centred on {@code pivot}
-     */
+
+    // Triadic Closure but we are only considering a specific node
     public static List<OpenTriad> findOpenTriadsForNode(IMDBGraph g, String pivot) {
         List<OpenTriad> result = new ArrayList<>();
         if (!g.getNodes().contains(pivot)) return result;
