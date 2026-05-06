@@ -183,12 +183,16 @@ async function loadPersonCard(id) {
     } else {
       neighbEl.innerHTML =
         `<div class="neighbor-grid">` +
-        p.neighbors.map(n =>
-          `<div class="neighbor-item" data-id="${n.id}">
+        p.neighbors.map(n => {
+          const titleList = n.sharedTitleNames && n.sharedTitleNames.length
+            ? `<div class="n-titles">${n.sharedTitleNames.map(escHtml).join(', ')}</div>`
+            : '';
+          return `<div class="neighbor-item" data-id="${n.id}">
             <div class="n-name">${escHtml(n.name)}</div>
             <div class="n-count">${n.sharedTitles} shared title${n.sharedTitles !== 1 ? 's' : ''}</div>
-          </div>`
-        ).join('') +
+            ${titleList}
+          </div>`;
+        }).join('') +
         `</div>`;
       neighbEl.querySelectorAll('.neighbor-item').forEach(el => {
         el.addEventListener('click', () => loadPersonCard(el.dataset.id));
@@ -210,12 +214,16 @@ async function loadPersonCard(id) {
 // ── Centrality tab ────────────────────────────────────────────────────────────
 
 function initCentrality() {
-  const typeEl    = document.getElementById('c-type');
-  const filterEl  = document.getElementById('c-filter');
-  const topNEl    = document.getElementById('c-topN');
-  const btn       = document.getElementById('c-btn');
-  const warning   = document.getElementById('c-warning');
-  const results   = document.getElementById('c-results');
+  const typeEl      = document.getElementById('c-type');
+  const filterEl    = document.getElementById('c-filter');
+  const topNEl      = document.getElementById('c-topN');
+  const titleTypeEl = document.getElementById('c-title-type');
+  const genreEl     = document.getElementById('c-genre');
+  const startYearEl = document.getElementById('c-start-year');
+  const endYearEl   = document.getElementById('c-end-year');
+  const btn         = document.getElementById('c-btn');
+  const warning     = document.getElementById('c-warning');
+  const results     = document.getElementById('c-results');
 
   typeEl.addEventListener('change', () => {
     const slow = typeEl.value !== 'degree';
@@ -223,17 +231,27 @@ function initCentrality() {
   });
 
   btn.addEventListener('click', async () => {
-    const type   = typeEl.value;
-    const filter = filterEl.value;
-    const topN   = parseInt(topNEl.value, 10) || 10;
+    const type      = typeEl.value;
+    const filter    = filterEl.value;
+    const topN      = parseInt(topNEl.value, 10) || 10;
     const actors    = filter === 'actors'    ? '&actorsOnly=true'    : '';
     const directors = filter === 'directors' ? '&directorsOnly=true' : '';
+
+    const titleType = titleTypeEl.value;
+    const genre     = genreEl.value;
+    const startYear = startYearEl.value.trim();
+    const endYear   = endYearEl.value.trim();
+
+    let filterParams = '';
+    if (titleType !== '')        filterParams += `&type=${titleType}`;
+    if (genre)                   filterParams += `&genres=${encodeURIComponent(genre)}`;
+    if (startYear && endYear)    filterParams += `&startYear=${startYear}&endYear=${endYear}`;
 
     results.innerHTML = spinner() + ' Computing…';
     btn.disabled = true;
 
     try {
-      const data = await api(`/centrality/${type}?topN=${topN}${actors}${directors}`);
+      const data = await api(`/centrality/${type}?topN=${topN}${actors}${directors}${filterParams}`);
       if (!data.length) { results.innerHTML = '<p class="no-result">No results.</p>'; return; }
 
       const maxScore = data[0].score;
@@ -285,7 +303,6 @@ function initPathFinder() {
   const btn     = document.getElementById('path-btn');
   const results = document.getElementById('path-results');
 
-  // Wire up the two person-picker components
   const ppFrom = initPersonPicker('pp-from');
   const ppTo   = initPersonPicker('pp-to');
 
@@ -296,11 +313,21 @@ function initPathFinder() {
     if (!to)   { alert('Please select Person B.'); return; }
     if (from.id === to.id) { results.innerHTML = '<p class="no-result">Same person — path length is 0.</p>'; return; }
 
+    const titleType = document.getElementById('path-title-type').value;
+    const genre     = document.getElementById('path-genre').value;
+    const startYear = document.getElementById('path-start-year').value.trim();
+    const endYear   = document.getElementById('path-end-year').value.trim();
+
+    let filterParams = '';
+    if (titleType)            filterParams += `&type=${titleType}`;
+    if (genre)                filterParams += `&genres=${encodeURIComponent(genre)}`;
+    if (startYear && endYear) filterParams += `&startYear=${startYear}&endYear=${endYear}`;
+
     results.innerHTML = spinner() + ' Searching for path (BFS)…';
     btn.disabled = true;
 
     try {
-      const data = await api('/path?from=' + encodeURIComponent(from.id) + '&to=' + encodeURIComponent(to.id));
+      const data = await api('/path?from=' + encodeURIComponent(from.id) + '&to=' + encodeURIComponent(to.id) + filterParams);
       if (!data.found) {
         results.innerHTML = '<p class="no-result">No path found between these two people (they may be in disconnected components).</p>';
         return;
@@ -312,12 +339,20 @@ function initPathFinder() {
         <div class="path-chain">` +
         data.path.map((step, i) => {
           const isFirst = i === 0, isLast = i === data.path.length - 1;
-          const edge = (i < data.path.length - 1 && data.path[i + 1].sharedTitles > 0)
-            ? `<div class="path-edge">
-                <div class="path-edge-line"></div>
-                <div class="path-edge-label">${data.path[i + 1].sharedTitles} shared title${data.path[i + 1].sharedTitles !== 1 ? 's' : ''}</div>
-                <div class="path-edge-line"></div>
-              </div>` : (i < data.path.length - 1 ? `<div class="path-edge"><div class="path-edge-line" style="height:30px"></div></div>` : '');
+          const edge = (i < data.path.length - 1)
+            ? (() => {
+                const nextTitles = data.path[i + 1].sharedTitleNames || [];
+                if (!nextTitles.length) return `<div class="path-edge"><div class="path-edge-line" style="height:30px"></div></div>`;
+                return `<div class="path-edge">
+                  <div class="path-edge-line"></div>
+                  <div class="path-edge-label">
+                    ${nextTitles.length} shared title${nextTitles.length !== 1 ? 's' : ''}:
+                    <span class="path-title-list">${nextTitles.map(escHtml).join(', ')}</span>
+                  </div>
+                  <div class="path-edge-line"></div>
+                </div>`;
+              })()
+            : '';
           return `<div class="path-step">
             <div class="path-node ${isFirst ? 'first' : ''} ${isLast ? 'last' : ''}">
               <div class="pn-name">${escHtml(step.name)}</div>
@@ -427,6 +462,7 @@ let visEdges    = null; // vis.DataSet
 let graphPersonData  = {}; // id -> PersonDetailDto cache
 let expandedNodes    = new Set(); // ids whose neighbors are already in the graph
 let graphCenterId    = null;
+let graphFilterParams = ''; // filter query string applied to the current graph
 
 function initGraphExplorer() {
   const inputEl   = document.getElementById('gex-input');
@@ -447,6 +483,17 @@ function initGraphExplorer() {
 
   btn.addEventListener('click', () => {
     if (!chosenPerson) { alert('Please select a person first.'); return; }
+
+    const titleType = document.getElementById('gex-title-type').value;
+    const genre     = document.getElementById('gex-genre').value;
+    const startYear = document.getElementById('gex-start-year').value.trim();
+    const endYear   = document.getElementById('gex-end-year').value.trim();
+
+    graphFilterParams = '';
+    if (titleType)            graphFilterParams += `&type=${titleType}`;
+    if (genre)                graphFilterParams += `&genres=${encodeURIComponent(genre)}`;
+    if (startYear && endYear) graphFilterParams += `&startYear=${startYear}&endYear=${endYear}`;
+
     loadGraphForPerson(chosenPerson);
   });
 }
@@ -475,7 +522,7 @@ async function loadGraphForPerson(person) {
 
   try {
     const limit  = getGraphLimit();
-    const detail = await api('/persons/' + encodeURIComponent(person.id) + '?limit=' + limit);
+    const detail = await api('/persons/' + encodeURIComponent(person.id) + '?limit=' + limit + graphFilterParams);
     graphPersonData[detail.id] = detail;
     detail.neighbors.forEach(n => { graphPersonData[n.id] = graphPersonData[n.id] || { id: n.id, name: n.name }; });
 
@@ -498,7 +545,7 @@ async function expandNode(id) {
   const limit = getGraphLimit();
   let detail;
   try {
-    detail = await api('/persons/' + encodeURIComponent(id) + '?limit=' + limit);
+    detail = await api('/persons/' + encodeURIComponent(id) + '?limit=' + limit + graphFilterParams);
     graphPersonData[id] = detail;
   } catch (e) { expandedNodes.delete(id); return; }
 
@@ -520,12 +567,13 @@ async function expandNode(id) {
     }
     const edgeId = [id, n.id].sort().join('--');
     if (!visEdges.get(edgeId)) {
+      const titles = n.sharedTitleNames && n.sharedTitleNames.length ? n.sharedTitleNames.join('\n') : n.sharedTitles + ' shared title' + (n.sharedTitles !== 1 ? 's' : '');
       newEdges.push({
         id:    edgeId,
         from:  id,
         to:    n.id,
         width: Math.max(1, Math.min(n.sharedTitles, 8)),
-        title: n.sharedTitles + ' shared title' + (n.sharedTitles !== 1 ? 's' : ''),
+        title: titles,
         color: { color: '#3a4a5a', highlight: '#f0b429', opacity: 0.8 }
       });
     }
@@ -554,7 +602,7 @@ function buildVisNetwork(detail, container) {
     label: detail.name,
     size:  28,
     color: nodeColor(detail, true),
-    font:  { color: '#000', size: 13, bold: true },
+    font:  { color: '#fff', size: 14, bold: true },
     shape: 'dot'
   });
 
@@ -569,12 +617,13 @@ function buildVisNetwork(detail, container) {
       shape: 'dot'
     });
     const edgeId = [detail.id, n.id].sort().join('--');
+    const titles = n.sharedTitleNames && n.sharedTitleNames.length ? n.sharedTitleNames.join('\n') : n.sharedTitles + ' shared title' + (n.sharedTitles !== 1 ? 's' : '');
     edges.push({
       id:    edgeId,
       from:  detail.id,
       to:    n.id,
       width: Math.max(1, Math.min(n.sharedTitles, 8)),
-      title: n.sharedTitles + ' shared title' + (n.sharedTitles !== 1 ? 's' : ''),
+      title: titles,
       color: { color: '#3a4a5a', highlight: '#f0b429', opacity: 0.8 }
     });
   });

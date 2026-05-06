@@ -13,10 +13,10 @@ This project is a network analysis tool for exploring relationships within the f
 
 | Team Member | Contributions |
 |---|---|
-| **Eloise** | Data parsing, graph design, and filtering (in progress) |
+| **Eloise** | Data parsing, graph design, and filtering |
 | **Henry** | Graph algorithms — triadic closure and Dijkstra's shortest path (`graph_algorithms/` folder) |
 | **Tomas** | Centrality measures (degree centrality, Katz centrality) and the UI |
 
 ## AI Usage
 
-Claude Code was used to assist with structuring portions of the codebase, as well as producing a functioning UI. All algorithms and core logic were designed by the team.
+Claude Code was used to assist with structuring portions of the codebase, as well as producing a functioning UI. All algorithms, core logic, and data structures were designed by the team.

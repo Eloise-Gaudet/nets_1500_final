@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -148,6 +149,14 @@ public class IMDBGraph implements Serializable {
         return Collections.unmodifiableSet(all_people.keySet());
     }
 
+    public List<Person> get_all_people() {
+        return new ArrayList<>(all_people.values());
+    }
+
+    public List<Title> get_all_titles() {
+        return new ArrayList<>(all_titles.values());
+    }
+
     public int get_degree(String personId) {
         HashMap<String, Integer> neighbors = all_connections.get(personId);
         if (neighbors == null) {
@@ -159,6 +168,21 @@ public class IMDBGraph implements Serializable {
 
     public int size() {
         return all_people.size();
+    }
+
+    public List<String> get_shared_titles(String person1_id, String person2_id) {
+        Person person1 = all_people.get(person1_id);
+        Person person2 = all_people.get(person2_id);
+
+        List<String> shared = new ArrayList<>(person1.get_titles());
+        shared.retainAll(person2.get_titles());
+
+        List<String> names = new ArrayList<>();
+        for (String s : shared) {
+            names.add(all_titles.get(s).get_name());
+        }
+
+        return names;
     }
 
 }

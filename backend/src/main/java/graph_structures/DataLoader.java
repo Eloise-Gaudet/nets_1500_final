@@ -69,7 +69,7 @@ public class DataLoader {
                 int title_type;
                 if (fields[1].contains("movie")) {
                     title_type = 0;
-                } else if (fields[1].contains("tvshow")) {
+                } else if (fields[1].contains("tvSeries")) {
                     title_type = 1;
                 } else {
                     title_type = 2;
@@ -88,7 +88,7 @@ public class DataLoader {
                 } else {
                     end_year = -1;
                 }
-                String genres = fields[7];
+                String genres = fields[8];
 
                 if (title_type < 2) {
                     Title new_title = new Title(title_name, tconst, title_type, start_year, end_year, genres);
@@ -149,6 +149,7 @@ public class DataLoader {
                     String character = fields[5];
                     Title title = titles.get(tconst);
                     title.add_actor(person, character);
+                    person.add_title(tconst);
                 }
             }
         } catch (IOException e) {

@@ -1,5 +1,7 @@
 package graph_structures;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -21,7 +23,7 @@ public class Person implements Serializable {
     private boolean is_director; 
 
     //list of titles 
-    //private ArrayList<Title> titles;
+    private final ArrayList<String> titles;
 
     public Person(String name, String id, boolean is_actor, boolean is_director) {
         this.name = name;
@@ -29,14 +31,12 @@ public class Person implements Serializable {
         this.is_actor = is_actor;
         this.is_director = is_director;
 
-        //titles = new ArrayList<>();
+        titles = new ArrayList<>();
     }
 
-    /*
-    public void add_title(Title title) {
+    public void add_title(String title) {
         titles.add(title);
     }
-    */
 
     //some helper methods
     public String getName() { 
@@ -51,6 +51,10 @@ public class Person implements Serializable {
 
     public String get_id() {
         return id;
+    }
+
+    public List<String> get_titles() {
+        return titles;
     }
 
     //be able to find equalities

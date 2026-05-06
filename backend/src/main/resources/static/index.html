@@ -138,6 +138,39 @@
           <input id="c-topN" type="number" value="10" min="1" max="50" style="width:70px">
           <button id="c-btn" class="btn-primary">Get Rankings</button>
         </div>
+        <div class="control-row" style="margin-top:8px">
+          <select id="c-title-type">
+            <option value="">All types</option>
+            <option value="0">Movies only</option>
+            <option value="1">TV Shows only</option>
+          </select>
+          <select id="c-genre">
+            <option value="">All genres</option>
+            <option value="Action">Action</option>
+            <option value="Adventure">Adventure</option>
+            <option value="Animation">Animation</option>
+            <option value="Biography">Biography</option>
+            <option value="Comedy">Comedy</option>
+            <option value="Crime">Crime</option>
+            <option value="Documentary">Documentary</option>
+            <option value="Drama">Drama</option>
+            <option value="Family">Family</option>
+            <option value="Fantasy">Fantasy</option>
+            <option value="History">History</option>
+            <option value="Horror">Horror</option>
+            <option value="Music">Music</option>
+            <option value="Musical">Musical</option>
+            <option value="Mystery">Mystery</option>
+            <option value="Romance">Romance</option>
+            <option value="Sci-Fi">Sci-Fi</option>
+            <option value="Sport">Sport</option>
+            <option value="Thriller">Thriller</option>
+            <option value="War">War</option>
+            <option value="Western">Western</option>
+          </select>
+          <input id="c-start-year" type="number" placeholder="From year" min="1888" max="2030" style="width:95px">
+          <input id="c-end-year" type="number" placeholder="To year" min="1888" max="2030" style="width:95px">
+        </div>
         <div id="c-warning" class="warning hidden">
           ⚠ Eigenvector / Katz centrality runs power iteration over the full graph.
           This may take 30 – 120 s on large datasets. Hang tight…
@@ -166,7 +199,40 @@
             <div class="chosen-badge hidden"></div>
           </div>
         </div>
-        <button id="path-btn" class="btn-primary">Find Path</button>
+        <div class="control-row" style="margin-top:12px">
+          <select id="path-title-type">
+            <option value="">All types</option>
+            <option value="0">Movies only</option>
+            <option value="1">TV Shows only</option>
+          </select>
+          <select id="path-genre">
+            <option value="">All genres</option>
+            <option value="Action">Action</option>
+            <option value="Adventure">Adventure</option>
+            <option value="Animation">Animation</option>
+            <option value="Biography">Biography</option>
+            <option value="Comedy">Comedy</option>
+            <option value="Crime">Crime</option>
+            <option value="Documentary">Documentary</option>
+            <option value="Drama">Drama</option>
+            <option value="Family">Family</option>
+            <option value="Fantasy">Fantasy</option>
+            <option value="History">History</option>
+            <option value="Horror">Horror</option>
+            <option value="Music">Music</option>
+            <option value="Musical">Musical</option>
+            <option value="Mystery">Mystery</option>
+            <option value="Romance">Romance</option>
+            <option value="Sci-Fi">Sci-Fi</option>
+            <option value="Sport">Sport</option>
+            <option value="Thriller">Thriller</option>
+            <option value="War">War</option>
+            <option value="Western">Western</option>
+          </select>
+          <input id="path-start-year" type="number" placeholder="From year" min="1888" max="2030" style="width:95px">
+          <input id="path-end-year" type="number" placeholder="To year" min="1888" max="2030" style="width:95px">
+        </div>
+        <button id="path-btn" class="btn-primary" style="margin-top:12px">Find Path</button>
         <div id="path-results"></div>
       </div>
     </section>
@@ -219,6 +285,39 @@
           <button id="gex-btn" class="btn-primary">Load Network</button>
         </div>
         <div id="gex-chosen" class="chosen-badge hidden" style="margin-top:8px"></div>
+        <div class="control-row" style="margin-top:10px">
+          <select id="gex-title-type">
+            <option value="">All types</option>
+            <option value="0">Movies only</option>
+            <option value="1">TV Shows only</option>
+          </select>
+          <select id="gex-genre">
+            <option value="">All genres</option>
+            <option value="Action">Action</option>
+            <option value="Adventure">Adventure</option>
+            <option value="Animation">Animation</option>
+            <option value="Biography">Biography</option>
+            <option value="Comedy">Comedy</option>
+            <option value="Crime">Crime</option>
+            <option value="Documentary">Documentary</option>
+            <option value="Drama">Drama</option>
+            <option value="Family">Family</option>
+            <option value="Fantasy">Fantasy</option>
+            <option value="History">History</option>
+            <option value="Horror">Horror</option>
+            <option value="Music">Music</option>
+            <option value="Musical">Musical</option>
+            <option value="Mystery">Mystery</option>
+            <option value="Romance">Romance</option>
+            <option value="Sci-Fi">Sci-Fi</option>
+            <option value="Sport">Sport</option>
+            <option value="Thriller">Thriller</option>
+            <option value="War">War</option>
+            <option value="Western">Western</option>
+          </select>
+          <input id="gex-start-year" type="number" placeholder="From year" min="1888" max="2030" style="width:95px">
+          <input id="gex-end-year" type="number" placeholder="To year" min="1888" max="2030" style="width:95px">
+        </div>
       </div>
 
       <div class="card" id="graph-outer" style="padding:0; overflow:hidden;">
