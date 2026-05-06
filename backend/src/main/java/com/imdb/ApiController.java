@@ -40,6 +40,7 @@ public class ApiController {
 
     static class NeighborDto {
         public String id, name;
+        public boolean isActor, isDirector;
         public int sharedTitles;
         public List<String> sharedTitleNames;
         NeighborDto(String id, String name, int sharedTitles) {
@@ -137,7 +138,11 @@ public class ApiController {
         List<NeighborDto> neighborList = new ArrayList<>();
         for (Map.Entry<String, Integer> e : g.get_neighbors(id).entrySet()) {
             Person n = g.get_person(e.getKey());
-            if (n != null) neighborList.add(new NeighborDto(e.getKey(), n.getName(), e.getValue()));
+            if (n != null) {
+                NeighborDto nd = new NeighborDto(e.getKey(), n.getName(), e.getValue());
+                nd.isActor = n.isActor(); nd.isDirector = n.isDirector();
+                neighborList.add(nd);
+            }
         }
         neighborList.sort((a, b) -> b.sharedTitles - a.sharedTitles);
         if (neighborList.size() > limit) neighborList = neighborList.subList(0, limit);

@@ -524,7 +524,7 @@ async function loadGraphForPerson(person) {
     const limit  = getGraphLimit();
     const detail = await api('/persons/' + encodeURIComponent(person.id) + '?limit=' + limit + graphFilterParams);
     graphPersonData[detail.id] = detail;
-    detail.neighbors.forEach(n => { graphPersonData[n.id] = graphPersonData[n.id] || { id: n.id, name: n.name }; });
+    detail.neighbors.forEach(n => { graphPersonData[n.id] = graphPersonData[n.id] || n; });
 
     expandedNodes = new Set();
     graphCenterId = detail.id;
