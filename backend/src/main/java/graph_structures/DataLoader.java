@@ -120,6 +120,7 @@ public class DataLoader {
                         Person dir = imdb_graph.get_person(director);
                         if (dir != null) {
                             title.add_director(dir);
+                            dir.add_title(tconst);
                         }
                     }
                 }
